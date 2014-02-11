@@ -1,171 +1,201 @@
 import 'dart:html';
 import 'dart:async';
 
-// Useragent sniffing...
-// Not good! 
-// TODO: Replace this with something more robust.
-String _lowerCaseUserAgent = window.navigator.userAgent.toLowerCase();
-Map<String, bool> browserType = {
-  "firefox": _lowerCaseUserAgent.contains("firefox"),
-  "chrome": _lowerCaseUserAgent.contains("chrome"),
-  "opera": _lowerCaseUserAgent.contains("opera"),
-  "ie": _lowerCaseUserAgent.contains("msie") || _lowerCaseUserAgent.contains("trident")
-};
-
-abstract class FavicoSource {
-  void render (CanvasRenderingContext2D ctx, num deltaT) {
-    
-  }
-}
-class FavicoImageSource extends FavicoSource {
-  void render (CanvasRenderingContext2D ctx, num deltaT) {
-    
-  }
-}
-class FavicoSpriteSource extends FavicoSource {
-  String imageSource;
-  int frameWidth;
-  int frameHeight;
-  num millisecondsPerFrame;
-  
-
-  ImageElement _image;
-  int currentFrame;
-  
-  
-  FavicoSpriteSource (this.imageSource, this.frameWidth, this.frameHeight);
-  
-  void render (CanvasRenderingContext2D ctx, num deltaT) {
-    
-  }  
-}
-class FavicoVideoSource extends FavicoSource {
-  VideoElement video;
-  bool repeat;
-  FavicoVideoSource(this.video);
-  void render (CanvasRenderingContext2D ctx, num deltaT) {
-    
-  }
-}
-
-class FavicoFrameSource extends FavicoSource {
-  List<String> urlList;
-  FavicoFrameSource (this.urlList);
-  void render (CanvasRenderingContext2D ctx, num deltaT) {
-    
-  }  
-}
-
-class FavicoCanvasSource extends FavicoSource {
-  CanvasElement canvas;
-  FavicoCanvasSource (this.canvas);
-  void render (CanvasRenderingContext2D ctx, num deltaT) {
-    
-  }  
-}
-
 void main () {
-  var f = new Favico();
-  f.pulse(10);
+  new Favicon();
 }
 
-class Position {
-  static int TOP_LEFT = 1;
-  static int TOP_RIGHT = 2;
-  static int BOTTOM_LEFT = 3;
-  static int BOTTOM_RIGHT = 4;
-  
-}
-
-typedef FavicoState FavicoAnimation(FavicoState fs, num deltaT, List parameters);
-class Favico {
-  // Options 
-  String backgroundColor = "#d00";
-  String textColor = "white";
-  String fontFamily = "sans-serif";
-  String fontStyle = "bold";
-  FavicoType type;
-  int position;
-  FavicoImageSource source;
-  Element destination;
-  
-  // Elements
+class Favicon {
   CanvasElement _canvas;
   CanvasRenderingContext2D _context;
-  
-  num _currentBadgeNumber;
-  
-  List<FavicoAnimationItem> animationQueue;
-  
-  Favico ({ this.backgroundColor: "#d00",
-            this.textColor: "white", 
-            this.fontFamily: "sans-serif", 
-            this.fontStyle: "bold", 
-            this.type, 
-            this.position, 
-            this.destination }) {
-            if (this.position == null) this.position = Position.BOTTOM_RIGHT;
-            if (this.type == null) this.type = FavicoType.CIRCLE;
-            if (!_initialized) init();
-            
-       if (this.position < 0 || this.position > 4) this.position = Position.BOTTOM_RIGHT;
-       
-       
-  }
-  
-  
-  // Static:
-  static bool _initialized = false;
-  static Map<Symbol, FavicoAnimation> _animationElements = new Map<Symbol, FavicoAnimation>();
-  
-  /// Registers an animation for use with Favico badges.
-  static void registerAnimation (Symbol animationName, FavicoAnimation animationCallback) {
-    _animationElements[animationName] = animationCallback;
-  }
-
-  static void init () {
-    /// TODO: Register default animations here..      
-    _initialized = true;
-  }
-  
-  
-  // 
-  noSuchMethod(Invocation invo) {
-    if (_animationElements.containsKey(invo.memberName)) { 
-      animationQueue.add(new FavicoAnimationItem (invo.memberName, invo.positionalArguments));
-      return this;
+  List<FaviconDrawable> elements = new List<FaviconDrawable>();
+  Element destinationElement;
+  int size;
+  Favicon ({ this.destinationElement, this.size: 16 }) {
+    if (this.destinationElement == null) {
+      // TODO: Set default
     }
-    throw new NoSuchMethodError(invo);
+    
+    _canvas = new CanvasElement();
+    _canvas.width = this.size;
+    _context = _canvas.getContext("2d");    
+    FaviconDrawable._init();    
+    window.requestAnimationFrame(_beginLoop);
+    }
+  
+  num _prevFrameTime = 0;
+  
+  void _beginLoop (num t) {
+    window.requestAnimationFrame(_beginLoop);
+    _canvas.width = _canvas.width;
+    num timeElapsed = t - _prevFrameTime;
+    _prevFrameTime = t;
+    int eleLength = elements.length;
+    for (int x = 0; x <= eleLength; x++) { 
+      FaviconDrawable currentDrawable = elements[x];
+      currentDrawable.update(timeElapsed);
+      if (!currentDrawable._remove) {
+        currentDrawable.draw(_context);
+      }
+    }
   }
 }
+typedef bool FaviconTransition (FaviconDrawable drawable, int deltaT, List parameters, FaviconTransitionQueue currentQueue);
 
-class FavicoAnimationItem {
-  Symbol itemName;
-  List parameters;
-  FavicoAnimationItem (Symbol this.itemName, this.parameters);
-}
-
-/***
- * Contains modifier fields that describe the desired favicon state
- * Fields: [x] [y] [opacity] [scale]
- */
-class FavicoState {
-  num x = 1.0;
-  num y = 1.0;
-  num opacity = 1.0;
-  num scale = 1.0;
-  int position = Position.BOTTOM_RIGHT;
+@proxy
+abstract class FaviconDrawable {
+ bool _remove = false;
+ List<FaviconTransitionQueue> _animationQueue = new List<FaviconTransitionQueue>();
+ FaviconTransitionQueue _currentQueue = new FaviconTransitionQueue();
+ bool _isTransitioning = false; 
+ num x;
+ num y;
+ num scale;
+ num opacity; 
+ 
+ num targetX = 0;
+ num targetY = 0;
+ num targetScale = 1;
+ num targetOpacity = 1;
+ 
+ void play () {
+   this._isTransitioning = true;
+   _animationQueue.add(_currentQueue);
+   this.clearCurrent();
+ }
+ 
+ void clearCurrent () {
+   _currentQueue = new FaviconTransitionQueue();
+ }
+ void stop () {
+   _currentState.animationComplete = true;
+   this.clearCurrent();
+   _animationQueue = new List<FaviconTransitionQueue>();
+ }
+ 
+ void pause () {
+   _isTransitioning = false;
+ }
+ 
+ void destroy () {
+   this._remove = true;
+ }
+ 
+ void _update (int timeSinceLastFrame) {
+   if (_isTransitioning) { 
+     if (_animationQueue.length > 0) {
+       FaviconTransitionQueue currentAnimationQueue = _animationQueue[0];
+       if (currentAnimationQueue.transitions.length < 0) {
+         FaviconTransitionQueueItem currentAnimation = currentAnimationQueue.transitions[0];
+         bool isComplete = FaviconDrawable._transitions[currentAnimation.animationName](this, currentAnimation.parameters, timeSinceLastFrame, currentAnimationQueue);
+         if (isComplete) currentAnimation.c.complete(this);
+       }
+       else {
+         _animationQueue.removeAt(0);
+         this.onAnimationQueueEnd();
+         // Reinvoke the update method
+         this._update(timeSinceLastFrame);
+         // Leave this one so it doesnt update twice...
+         return;
+       }
+     }
+   }
+   
+   this.update(timeSinceLastFrame);
+ }
+ 
+ void onAnimationQueueEnd () {
+   
+ }
+ 
+ void update (int timeSinceLastFrame) {
   
-  bool isComplete = false;
+ }
+ void draw (CanvasRenderingContext2D ctx) {
+   
+ }
+ 
+ //***** Transition loading and registration
+ static Map<Symbol, FaviconTransition> _transitions = new Map<Symbol, FaviconTransition> ();
+ static bool registerTransition (Symbol name, FaviconTransition transition) {
+   if (!FaviconDrawable._transitions.containsKey(name)) { 
+     FaviconDrawable._transitions[name] = transition;
+     return true;
+   }
+   return false;
+ }
+ static bool _initialized = false;
+ static void _init () {
+   if (!_initialized) {
+     // TODO: Register animations
+   }
+ }
+ noSuchMethod (Invocation invoke) {
+   if (invoke.isMethod){
+     if (FaviconDrawable._transitions.containsKey(invoke.memberName)) {
+       var fIQI = new FaviconTransitionQueueItem(invoke.memberName, parameters);
+       _currentQueue.add(fIQI);
+      return fIQI.c.future;
+     }
+   }
+   super.noSuchMethod(invoke);
+ }
+ 
 }
 
-abstract class FavicoType {  
-  static FavicoType CIRCLE = new CircleFavico();
-  void render(num badgeNumber, CanvasRenderingContext2D ctx);
+class FaviconTransitionQueue {
+  List<FaviconTransitionQueueItem> transitions = new List<FaviconTransitionQueueItem>();
+  FaviconTransitionQueue();
+  void add (FaviconTransitionQueueItem item) { 
+    transitions.add(item);
+  }
+}
+class FaviconTransitionQueueItem { // Probably too descriptive!
+  Symbol animationName;
+  Completer c = new Completer();
+  List parameters;
+  FaviconTransitionQueueItem (this.animationName, this.parameters);
 }
 
-class CircleFavico extends FavicoType {
-  void render (num badgeNumber, CanvasRenderingContext2D ctx) {
-    
+class FaviconPosition { 
+  final int pos;
+  const FaviconPosition(this.pos);
+  static const FaviconPosition TOP_LEFT = const FaviconPosition(0);
+  static const FaviconPosition TOP_RIGHT = const FaviconPosition(1);
+  static const FaviconPosition BOTTOM_LEFT = const FaviconPosition(2);
+  static const FaviconPosition BOTTOM_RIGHT = const FaviconPosition(3);
+}
+
+class FaviconBadge extends FaviconDrawable {
+  String backgroundColour;
+  String fontFamily;
+  String fontStyle;
+  String type;
+  FaviconPosition position;
+  List<int> badgeUpdateQueue = new List<int>();
+  int currBadge = 0;
+  
+  void onAnimationQueueEnd () {
+    if (badgeUpdateQueue.length > 0) {
+      currBadge = badgeUpdateQueue[0];
+      badgeUpdateQueue.removeAt(0);
+    }
+  }
+  
+  void draw (CanvasRenderingContext2D ctx) {
+      
+  }
+  
+  void update (int deltaT) {
+     
+  }
+  
+  void clearBadgeQueue() {
+    badgeUpdateQueue = new List<int>();
+  }
+  
+  void badge (int updateNumber) {
+    badgeUpdateQueue.add(updateNumber);
+    this.play();
   }
 }
