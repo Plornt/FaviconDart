@@ -15,7 +15,9 @@ void main () {
     ButtonElement b = new ButtonElement();
     b.innerHtml = "+ 1";
     b.onClick.listen((ev) { 
-      badge..slideInUp(200)
+      badge..stop()
+           ..fade(0.5, 0.5)
+           ..slideInDown(200)
            ..incrementBadge();
     });
     document.body.append(b);
@@ -80,7 +82,7 @@ class Favicon {
   }
 }
 typedef bool FaviconTransition (FaviconDrawable drawable, num deltaT, List parameters, FaviconTransitionQueueItem item);
-@proxy
+//@proxy
 abstract class FaviconDrawable {
  bool _remove = false;
  List<FaviconTransitionQueue> _animationQueue = new List<FaviconTransitionQueue>();
@@ -89,7 +91,13 @@ abstract class FaviconDrawable {
  num x = 0;
  num y = 0;
  num scale = 1;
- num opacity = 0; 
+ num opacity = 0;
+ 
+ num width = 0;
+ num height = 0;
+ num get scaledWidth => width * scale;
+ num get scaledHeight => height * scale;
+ 
  
  num targetX = 0;
  num targetY = 0;
@@ -99,19 +107,6 @@ abstract class FaviconDrawable {
  Favicon _parent;
  
  Favicon get parent => _parent;
- 
- num _size;
- set size (num s) {
-   _size = s;
- }
- 
- num get size {
-   return (_size != null ? _size : parent.size);
- }
- 
- num get scaledSize {
-   return size * scale;
- }
  
  FaviconDrawable () {
    
@@ -162,9 +157,11 @@ abstract class FaviconDrawable {
        int animLength = currentAnimationQueue.transitions.length;
        if (animLength > 0) {
          bool allComplete = true;
+         if (currentAnimationQueue.transitions[0].isFirstFrame) this.onBeforeAnimationQueueBegin();
          for (int animX = 0; animX < animLength; animX++) {
            FaviconTransitionQueueItem currentAnimation = currentAnimationQueue.transitions[animX];
            bool isComplete = FaviconDrawable._transitions[currentAnimation.animationName](this, timeSinceLastFrame, currentAnimation.parameters, currentAnimation);
+           
            currentAnimation.isFirstFrame = false;
            if (isComplete) {
              currentAnimation.c.complete(this);
@@ -174,6 +171,7 @@ abstract class FaviconDrawable {
            }
            else allComplete = false;
          }
+         
          if (allComplete) {
            this._isTransitioning = false;
            this.onAnimationQueueEnd();
@@ -183,6 +181,7 @@ abstract class FaviconDrawable {
        }
        else {
          _animationQueue.removeAt(0);
+         this.onBeforeAnimationQueueBegin();
          // Reinvoke the update method
          this._update(timeSinceLastFrame);
          // Leave this one so it doesnt update twice...
@@ -200,7 +199,9 @@ abstract class FaviconDrawable {
  void onAnimationQueueEnd () {
    
  }
- 
+ void onBeforeAnimationQueueBegin () {
+   
+ }
  void update (double timeSinceLastFrame) {
   
  }
@@ -236,14 +237,14 @@ abstract class FaviconDrawable {
                if (item.isFirstFrame) {
                    if (isIn) {
                      drawable.targetX = 0;
-                     drawable.x = (isLeft  == true ? drawable.scaledSize : 0 - drawable.scaledSize);
+                     drawable.x = (isLeft  == true ? drawable.parent.size: 0 - drawable.parent.size);
                     
                    }
-                   else drawable.x = (isLeft  == true ? 0 - drawable.scaledSize : drawable.scaledSize);
+                   else drawable.x = (isLeft  == true ? 0 - drawable.parent.size : drawable.parent.size);
                }
                
                // Step per millisecond
-               num step = (max(drawable.targetX, drawable.scaledSize) - min(drawable.targetX, drawable.scaledSize)) / duration;
+               num step = (max(drawable.targetX, drawable.scaledWidth) - min(drawable.targetX, drawable.scaledWidth)) / duration;
                
                // Move our current location relative to the duration of the animation and time elapsed
                if (isLeft) drawable.x -= step * deltaT;
@@ -263,13 +264,13 @@ abstract class FaviconDrawable {
                 if (item.isFirstFrame) {
                     if (isIn) {
                       drawable.targetY = 0;
-                      drawable.y = (isUp  == true ? drawable.scaledSize : 0 - drawable.scaledSize);
+                      drawable.y = (isUp  == true ? drawable.parent.size : 0 - drawable.parent.size);
                     }
-                    else drawable.y = (isUp  == true ? 0 - drawable.scaledSize : drawable.scaledSize);
+                    else drawable.y = (isUp  == true ? 0 - drawable.parent.size : drawable.parent.size);
                 }
                 
                 // Step per millisecond
-                num step = (max(drawable.targetY, drawable.scaledSize) - min(drawable.targetY, drawable.scaledSize)) / duration;
+                num step = (max(drawable.targetY, drawable.scaledHeight) - min(drawable.targetY, drawable.scaledHeight)) / duration;
                 // Move our current location relative to the duration of the animation and time elapsed
                 if (isUp) drawable.y -= step * deltaT;
                 else drawable.y += step * deltaT;
@@ -319,7 +320,7 @@ abstract class FaviconDrawable {
      
      bool fade (FaviconDrawable drawable, num deltaT, List parameters, FaviconTransitionQueueItem item) {
        int duration = (parameters.length >= 1 && parameters[0] is int ? parameters[0] : 1000);
-       num targetOpacity = (parameters.length >= 3 && parameters[1] is num ? parameters[1] : 1.0);
+       num targetOpacity = (parameters.length >= 2 && parameters[1] is num ? parameters[1] : 1.0);
        bool isComplete = false;
        if (item.isFirstFrame) {
          item.state["towards"] = drawable.opacity < targetOpacity; 
@@ -407,16 +408,21 @@ class FaviconBadge extends FaviconDrawable {
   List<int> badgeUpdateQueue = new List<int>();
   int currBadge = 0;
   
-  FaviconBadge ({ this.backgroundColor, this.fontColor, this.font: "30px Arial bold", this.type: "round", this.position: FaviconPosition.TOP_RIGHT }) {
+  FaviconBadge ({ this.backgroundColor, this.fontColor, this.font: "35px Arial bold", this.type: "round", this.position: FaviconPosition.TOP_RIGHT }) {
    if (this.backgroundColor == null) backgroundColor = new RGBA (255, 0, 0);
    if (this.fontColor == null) fontColor = new RGBA (255,255,255);
   }
   
-  void onAnimationQueueEnd () {
+  void onBeforeAnimationQueueBegin () {
     if (badgeUpdateQueue.length > 0) {
       print(badgeUpdateQueue[0]);
       currBadge = badgeUpdateQueue[0];
       badgeUpdateQueue.removeAt(0);
+    }
+  }
+  
+  void onAnimationQueueEnd () {
+    if (badgeUpdateQueue.length > 0) {
       this.resume();
     }
   }
@@ -432,17 +438,19 @@ class FaviconBadge extends FaviconDrawable {
   }
   
   void draw (CanvasRenderingContext2D ctx) {
-    
     String badgeText = convertBadgeToText(currBadge);
-    
-   // fontColor.alphaMod = opacity;
     ctx.font = "$font";   
-    double fW = ctx.measureText(badgeText).width;
-    double w = fW + 4;
+    double fontWidth = ctx.measureText(badgeText).width;
     // Estimated font height 
-    double h = fW / badgeText.length + 4;
+    double fontHeight = fontWidth / badgeText.length;
     
-    this.size = w;
+    int paddingLR = 4;
+    int paddingTB = 10;
+    
+    this.width = fontWidth + paddingLR;
+    this.height = fontHeight + paddingTB;
+    
+    int bgPadding = 2;
     backgroundColor.alphaMod = opacity;  
     ctx.fillStyle = backgroundColor.toString();   
     switch (position) {
@@ -450,43 +458,28 @@ class FaviconBadge extends FaviconDrawable {
         ctx.translate(2, 2);
         break;
       case FaviconPosition.TOP_RIGHT:
-        ctx.translate(parent.size - w - 2, 2);
+        ctx.translate(parent.size - width - bgPadding, 2);
         break;
       case FaviconPosition.BOTTOM_LEFT:
-        ctx.translate(2, parent.size - h - 2);
+        ctx.translate(2, parent.size - height - bgPadding);
         break;
 
       case FaviconPosition.BOTTOM_RIGHT:
-        ctx.translate(parent.size - w - 2, parent.size - h - 2);
+        ctx.translate(parent.size - width - bgPadding, parent.size - height - bgPadding);
         break;
     }
        
     // TODO: Fix this properly
-    double tw = w;
-    double th = h;
     if (type == "round") {
-      ctx.beginPath();
-      
-      double w = x + tw;
-      double h = y + th;
-      ctx.lineTo(w - h / 2, y);
-      ctx.quadraticCurveTo(w, y, w, h / 2);
-      ctx.lineTo(w, h - h / 2);
-      ctx.quadraticCurveTo(w, h, w - h / 2, h);
-      ctx.lineTo(h / 2, h);
-      ctx.quadraticCurveTo(x, h, x, h - h / 2);
-      ctx.lineTo(x, h / 2);
-      ctx.quadraticCurveTo(x, y, h / 2, y);
-      ctx.fill();
-      ctx.closePath();
+      ctx.fillRect(x, y, width, height);
     }
-    else {
-      ctx.fillRect(x, y, w, h);
+    else { 
+      ctx.fillRect(x, y, width, height);
     }
 
-     fontColor.alphaMod = opacity;
+    fontColor.alphaMod = opacity;
     ctx.fillStyle = fontColor.toString();
-    ctx.fillText(convertBadgeToText(currBadge), x + 2, y + (h - 1));  
+    ctx.fillText(convertBadgeToText(currBadge), x + (paddingLR / 2), height + y - (paddingTB / 4));  
     
   }
   
@@ -515,6 +508,6 @@ class FaviconBackgroundSource extends FaviconDrawable {
   FaviconBackgroundSource (this.backgroundColor);
   void draw (CanvasRenderingContext2D ctx) {
     ctx.fillStyle = backgroundColor.toString();
-    ctx.fillRect(x, y, this.size, this.size);
+    ctx.fillRect(x, y, parent.size, parent.size);
   }
 }
