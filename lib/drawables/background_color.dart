@@ -1,6 +1,8 @@
 part of FaviconDart;
 
-
+/***
+ * A simple single solid colour background element
+ */
 class FaviconBackground extends FaviconDrawable {
   RGBA backgroundColor;
   FaviconBackground (this.backgroundColor);

@@ -249,14 +249,13 @@ abstract class FaviconDrawable {
  
 }
 
-/***
- * Used to 
- */
 class FaviconPausable extends FaviconDrawable {
   bool isPaused = false;
+  /// Pauses the current visual
   void pause() {
     isPaused = true;
   }
+  /// Resumes the current visual
   void resume() {
     isPaused = false;
   }

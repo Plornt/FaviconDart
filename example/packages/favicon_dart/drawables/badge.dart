@@ -1,7 +1,6 @@
 part of FaviconDart;
 
 // Was sort of expecting more drawables to use the following:
-
 class FaviconPosition { 
   final int pos;
   const FaviconPosition(this.pos);
