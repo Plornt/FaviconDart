@@ -1,4 +1,8 @@
-name: Favico
-description: A sample command-line application
+name: favicon_dart
+version: 0.0.1
+author: Tom Caserta
+description: Favicon enables easy favicon animation including the ability to load in videos, images and notification badges.
+homepage: http://tom.caserta.co.uk/favicondart
+documentation: http://tom.caserta.co.uk/favicondart/documentation
 dependencies:
   browser: any
