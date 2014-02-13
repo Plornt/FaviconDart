@@ -22,7 +22,7 @@ class FaviconAnimationSource extends FaviconPausable {
  
   double _frameN = 0.0;
     
-  FaviconImagePreloader _preloader = new FaviconImagePreloader();
+  ImagePreloader _preloader = new ImagePreloader();
    
   /***
    * Creates a new animation from a list of image sources.

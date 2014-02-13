@@ -3,7 +3,7 @@ part of FaviconDart;
 /***
  * Creates a drawable from an icon in a [LinkElement] 
  */
-class FaviconIconSource extends FaviconDrawable {
+class IconSource extends FaviconElement {
   LinkElement linkElement;
   ImageElement _image;
   bool _hasLoaded = false;
@@ -13,7 +13,7 @@ class FaviconIconSource extends FaviconDrawable {
    * [linkElement] defaults to the pages default favicon. If no icon element is found it creates one from your 
    * servers favicon.ico image.
    */
-  FaviconIconSource ([ this.linkElement ]) {
+  IconSource ([ this.linkElement ]) {
     _image = new ImageElement();
     if (linkElement == null) {
       var queryElem = querySelectorAll(r"link[rel$='icon']");

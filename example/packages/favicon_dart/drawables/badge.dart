@@ -1,32 +1,32 @@
 part of FaviconDart;
 
 // Was sort of expecting more drawables to use the following:
-class FaviconPosition { 
+class Position { 
   final int pos;
-  const FaviconPosition(this.pos);
-  static const FaviconPosition TOP_LEFT = const FaviconPosition(0);
-  static const FaviconPosition TOP_RIGHT = const FaviconPosition(1);
-  static const FaviconPosition BOTTOM_LEFT = const FaviconPosition(2);
-  static const FaviconPosition BOTTOM_RIGHT = const FaviconPosition(3);
+  const Position(this.pos);
+  static const Position TOP_LEFT = const Position(0);
+  static const Position TOP_RIGHT = const Position(1);
+  static const Position BOTTOM_LEFT = const Position(2);
+  static const Position BOTTOM_RIGHT = const Position(3);
 }
 
 
-class FaviconBadge extends FaviconDrawable {
+class Badge extends FaviconElement {
   RGBA backgroundColor;
   RGBA fontColor;
   String font;
   String type;
-  FaviconPosition position;
+  Position position;
   List<int> badgeUpdateQueue = new List<int>();
   int currBadge = 0;
   int padding = 0;
   int showAbove = 0;
   
-  FaviconBadge ({ this.backgroundColor,
+  Badge ({ this.backgroundColor,
                   this.fontColor, 
                   this.font: "bold 8px sans-serif", 
                   this.type: "rounded", 
-                  this.position: FaviconPosition.BOTTOM_RIGHT, 
+                  this.position: Position.BOTTOM_RIGHT, 
                   this.padding: 0,
                   this.showAbove: 0
                   }) {
@@ -79,17 +79,17 @@ class FaviconBadge extends FaviconDrawable {
     backgroundColor.alphaMod = opacity;  
     ctx.fillStyle = backgroundColor.toString();   
     switch (position) {
-      case FaviconPosition.TOP_LEFT:
+      case Position.TOP_LEFT:
         ctx.translate(2, 2);
         break;
-      case FaviconPosition.TOP_RIGHT:
+      case Position.TOP_RIGHT:
         ctx.translate(parent.size - width - padding, 2);
         break;
-      case FaviconPosition.BOTTOM_LEFT:
+      case Position.BOTTOM_LEFT:
         ctx.translate(2, parent.size - height - padding);
         break;
 
-      case FaviconPosition.BOTTOM_RIGHT:
+      case Position.BOTTOM_RIGHT:
         ctx.translate(parent.size - width - padding, parent.size - height - padding);
         break;
     }
@@ -127,14 +127,8 @@ class FaviconBadge extends FaviconDrawable {
   void clearBadgeQueue() {
     badgeUpdateQueue = new List<int>();
   }
-  Future<FaviconDrawable> incrementBadge () {
-    _lastBadgeNum++;
-    return this.badge(_lastBadgeNum);
-  }
-  int _lastBadgeNum = 0;
-  Future<FaviconDrawable> badge (int updateNumber) {
-    _lastBadgeNum = updateNumber;
-    badgeUpdateQueue.add(updateNumber);
-    return this.play();
+  
+  void badge (int updateNumber) {
+    
   }
 }

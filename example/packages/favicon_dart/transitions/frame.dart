@@ -2,13 +2,13 @@ part of FaviconDart;
 
 class FaviconFrame {
   Completer c = new Completer();
-  List<FaviconTween> transitions = new List<FaviconTween>();
+  List<TransitionItem> transitions = new List<TransitionItem>();
   int frameNumber = 0;
   bool get isFirstFrame {
     return frameNumber == 0;
   }
   FaviconFrame();
-  void add (FaviconTween item) { 
+  void add (TransitionItem item) { 
     transitions.add(item);
   }
 }

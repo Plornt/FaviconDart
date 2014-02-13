@@ -1,77 +1,154 @@
 part of FaviconDart;
 
-abstract class FaviconDrawable {
+class State {
+  Map<String, dynamic> state;
+  State(this.state) {
+    
+  }
+  
+  dynamic get (String key) {
+    if (state.containsKey(key)) {
+      return state[key];
+    }
+    return null;
+  }
+  
+  void set(String key, dynamic val) {
+    state[key] = val;
+  }
+  
+  void addNum (String key, num amount) {
+    if (state.containsKey(key)) {
+      if (state[key] is num) {
+        state[key] += amount;
+      }
+    }
+    else {
+      state[key] = amount;
+    }
+  }
+  
+  void merge (State otherState) {
+    otherState.state.forEach((String key, dynamic val) { 
+      if (val is num) this.addNum(key, val);
+      else 
+        state[key] = val;
+    });
+  }
+  
+  void override (Map <String, dynamic> state) {
+    this.state.addAll(state);
+  }
+    
+  State clone () {
+    return new State(this.state);
+  }
+}
+
+class TransitionEvent {
+  final int type;
+  const TransitionEvent (this.type);
+  
+  static const TransitionEvent STEP = const TransitionEvent(2);
+  static const TransitionEvent STOP = const TransitionEvent(1);
+  static const TransitionEvent BEGIN = const TransitionEvent(0);
+}
+
+abstract class FaviconElement {
  bool _remove = false;
+ List<TransitionItem> _transitionQueue = new List<TransitionItem>();
+ TransitionItem _currentQueue = new TransitionItem(new State({}));
+ bool _isTransitioning = true;  
  
- List<FaviconFrame> _transitionQueue = new List<FaviconFrame>();
- FaviconFrame _currentQueue = new FaviconFrame();
- bool _isTransitioning = true; 
+ State state = new State({
+                                         "x": 0.0,
+                                         "y": 0.0,
+                                         "opacity": 0.0,
+                                         "scale": 0.0,
+                                         "container_width": 0.0,
+                                         "container_height": 0.0
+                                       });
  
- num x = 0;
- num y = 0;
- num scale = 1;
- num opacity = 1;
- 
- num width = 0;
- num height = 0;
- num get scaledWidth => width * scale;
- num get scaledHeight => height * scale;
- 
- 
- num targetX = 0;
- num targetY = 0;
- num targetScale = 1;
- num targetOpacity = 1;
- 
- Favicon _parent;
- 
+ Favicon _parent; 
  Favicon get parent => _parent;
  
- FaviconDrawable () {
+ 
+ /* GETTERS AND SETTERS */
+ double get x => state.get("x");
+ double get y => state.get("y");
+ double get opacity => state.get("opacity");
+ double get scale => state.get("scale");
+ double get width => state.get("container_width");
+ double get height => state.get("container_height");
+ 
+ set x (double v) => state.set("x", v);
+ set y (double v) => state.set("y", v); 
+ set opacity (double v) => state.set("opacity", v);
+ set scale (double v) => state.set("scale", v);
+ set width (double v) => state.set("container_width", v);
+ set height (double v) => state.set("container_height", v);
+ 
+ FaviconElement () {
    
  }
  
  /***
-  * Takes the current animation queue and plays it.
+  * 
   */
- Future<FaviconDrawable> play () {
-   Completer c = _currentQueue.c;
+  TransitionItem transition (Map<String, dynamic> transitionItems, [ bool addToQueue = false ]) {
+    if (addToQueue) {
+      _currentQueue.toState.override(transitionItems);
+      return _currentQueue;
+    }
+    else {
+      TransitionItem insertedTransition = new TransitionItem(new State(transitionItems));
+      return insertedTransition;
+    }    
+  }
+ 
+ /***
+  * Takes the current transition queue and plays it.
+  */
+ TransitionItem play () {
    _transitionQueue.add(_currentQueue);
    this.clearCurrent();
-   return c.future;   
+   return _currentQueue;   
  }
  
  /***
-  * Inserts the current animation queue to the top of the stack and plays it. 
+  * Inserts the current transition queue to the top of the stack and plays it. 
   */
- Future<FaviconDrawable> insertPlay () {
-   Completer c = _currentQueue.c;
-   print("Inserted current queue");
+ TransitionItem insertPlay () {
    if (_transitionQueue.length >= 1) {
-     print("Insert!");
     _transitionQueue.insert(0, _currentQueue);
    }
    else {
-     print("Added");
      _transitionQueue.add(_currentQueue);
    }
    this.clearCurrent();
-   return c.future;   
+   return _currentQueue;   
  }
  
  /***
-  * Clears the current animation queue
+  * Clears the current transition queue
   */
  void clearCurrent () {
-   _currentQueue = new FaviconFrame();
+   _currentQueue = new TransitionItem(new State({}));
  }
  
  /***
-  * Stops and clears any queued animations
+  * Stops and clears any queued transitions
+  * 
+  * if [endTransitions] is true the queued transitions futures will complete
   */
- void stop () {
+ void stop ([bool endTransitions = false]) {
    this.clearCurrent();
-   _transitionQueue = new List<FaviconFrame>();
+   if (endTransitions) {
+     _transitionQueue.forEach((TransitionItem t) { 
+       t.c.complete(this);
+     });
+   }
+   _transitionQueue = new List<TransitionItem>();
    onStop();
  }
  
@@ -105,40 +182,9 @@ abstract class FaviconDrawable {
   */
  void _onUpdate (double timeSinceLastFrame) {
    if (_isTransitioning) { 
-     // Transition is not paused:
-     if (_transitionQueue.length > 0) {
-        FaviconFrame currentFrame = _transitionQueue[0]; 
-        if (currentFrame.isFirstFrame) this.onBeforeAnimationQueueBegin(currentFrame);
-        currentFrame.frameNumber++;
-        int transitionsLength = currentFrame.transitions.length;
-        if (transitionsLength > 0) {
-          for (int x = 0; x < transitionsLength; x++) {
-            FaviconTween currentTransition = currentFrame.transitions[x];
-            print(currentTransition.animationName);
-            currentTransition.duration += timeSinceLastFrame;
-            bool isComp = FaviconDrawable._transitions[currentTransition.animationName](this, timeSinceLastFrame, currentTransition.parameters, currentTransition);
-            currentTransition.frameNumber++;
-            if (isComp) {
-              currentFrame.transitions.removeAt(x);
-              currentTransition.c.complete(this);
-              x--;
-              transitionsLength--;
-            }
-          }
-        }
-        else {
-          _transitionQueue.removeAt(0);
-          currentFrame.c.complete(this);
-          // No transitions in frame
-          this.onAnimationQueueEnd(currentFrame);
-        }
-     }
-     else {
-       // No transitions in drawable
-       this.onAnimationQueueEnd();
-     }
+     // TODO: Process transition
    }
-   
+       
    this.onUpdate(timeSinceLastFrame);
  }
  
@@ -173,9 +219,18 @@ abstract class FaviconDrawable {
  /***
   * Called when the animation queue has finished
   */
- void onAnimationQueueEnd ([ FaviconFrame currentFrame ]) {
+ void onTransitionEnd ([ TransitionItem currentFrame ]) {
    
  }
+ 
+
+ /***
+  * Called when the transition queue has been emptied
+  */
+ void onTransitionQueueEmptied () {
+   
+ }
+ 
  
  /***
   * Called when the element has been attached to a Favicon
@@ -187,7 +242,7 @@ abstract class FaviconDrawable {
  /***
   * Called before an animation begins processing
   */
- void onBeforeAnimationQueueBegin ([ FaviconFrame currentFrame ]) {
+ void onBeforeTransitionStart ([ TransitionItem currentFrame ]) {
    
  }
  
@@ -206,50 +261,9 @@ abstract class FaviconDrawable {
    
  }
  
- //***** Transition loading and registration
- static Map<Symbol, FaviconTransition> _transitions = new Map<Symbol, FaviconTransition> ();
- 
- /***
-  * Registers a new transitions
-  * [name] is the Symbol representation of the method name to be used
-  * 
-  * [transition] is the [FaviconTransition] called whenever the transition
-  * is used
-  */
- static bool registerTransition (Symbol name, FaviconTransition transition) {
-   if (!FaviconDrawable._transitions.containsKey(name)) { 
-     FaviconDrawable._transitions[name] = transition;
-     return true;
-   }
-   return false;
- }
- 
- static bool _initialized = false;
- 
- static void _init () {
-   if (!_initialized) {
-     // Load default transitions
-     _loadWaitTransitions();
-     _loadSlideTransitions();
-     _loadFadeTransitions();
-   }
- }
- 
- // Handler which handles the action to be taken whenever a transition is called on the element
- noSuchMethod (Invocation invoke) {
-   if (invoke.isMethod){
-     if (FaviconDrawable._transitions.containsKey(invoke.memberName)) {
-       var fIQI = new FaviconTween(invoke.memberName, invoke.positionalArguments);
-       _currentQueue.add(fIQI);
-      return fIQI.c.future;
-     }
-   }
-   super.noSuchMethod(invoke);
- }
- 
 }
 
-abstract class FaviconPausable extends FaviconDrawable {
+abstract class FaviconPausable extends FaviconElement {
   bool isPaused = false;
   /// Pauses the current visual
   void pause() {
