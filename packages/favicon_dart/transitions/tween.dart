@@ -1,11 +1,11 @@
 part of FaviconDart;
 
-typedef bool FaviconTransition (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item);
+typedef bool FaviconTransition (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item);
 
 /***
  * Container for an transition element including any parameters given and the current state of the transition
  */
-class FavicoTween {
+class FaviconTween {
   /// Symbol representing the transition method name
   Symbol animationName;
   
@@ -28,5 +28,5 @@ class FavicoTween {
   /// List of parameters provided when the transition was queued
   List parameters;  
   
-  FavicoTween (this.animationName, this.parameters);
+  FaviconTween (this.animationName, this.parameters);
 }

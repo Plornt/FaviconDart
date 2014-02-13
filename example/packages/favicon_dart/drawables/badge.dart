@@ -20,20 +20,33 @@ class FaviconBadge extends FaviconDrawable {
   List<int> badgeUpdateQueue = new List<int>();
   int currBadge = 0;
   int padding = 0;
+  int showAbove = 0;
   
-  FaviconBadge ({ this.backgroundColor, this.fontColor, this.font: "bold 10px sans-serif", this.type: "rounded", this.position: FaviconPosition.BOTTOM_RIGHT, this.padding: 0 }) {
+  FaviconBadge ({ this.backgroundColor,
+                  this.fontColor, 
+                  this.font: "bold 8px sans-serif", 
+                  this.type: "rounded", 
+                  this.position: FaviconPosition.BOTTOM_RIGHT, 
+                  this.padding: 0,
+                  this.showAbove: 0
+                  }) {
+    if (currBadge > showAbove) this.opacity = 1.0;
+    else this.opacity = 0.0;
+    
    if (this.backgroundColor == null) backgroundColor = new RGBA (255, 0, 0);
    if (this.fontColor == null) fontColor = new RGBA (255,255,255);
   }
   
-  void onBeforeAnimationQueueBegin () {
+  void onBeforeAnimationQueueBegin ([ FaviconFrame currentFrame ]) {
     if (badgeUpdateQueue.length > 0) {
       currBadge = badgeUpdateQueue[0];
       badgeUpdateQueue.removeAt(0);
+      if (currBadge > showAbove) this.opacity = 1.0;
+      else this.opacity = 0.0;
     }
   }
   
-  void onAnimationQueueEnd () {
+  void onAnimationQueueEnd ([ FaviconFrame currentFrame ]) {
     if (badgeUpdateQueue.length > 0) {
       this.resumeTransition();
     }
@@ -54,7 +67,7 @@ class FaviconBadge extends FaviconDrawable {
     ctx.font = "$font";   
     double fontWidth = ctx.measureText(badgeText).width;
     // Estimated font height 
-    double fontHeight = 6.0;
+    double fontHeight = 4.0;
     
     int paddingLR = 4;
     int paddingTB = 4;

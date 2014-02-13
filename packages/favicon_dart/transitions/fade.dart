@@ -3,7 +3,7 @@ part of FaviconDart;
 
 void _loadFadeTransitions () {
   
-  bool fade (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+  bool fade (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
     int duration = (parameters.length >= 1 && parameters[0] is int ? parameters[0] : 1000);
     num targetOpacity = (parameters.length >= 2 && parameters[1] is num ? parameters[1] : 1.0);
     bool isComplete = false;
@@ -32,11 +32,11 @@ void _loadFadeTransitions () {
   }
 
   FaviconDrawable.registerTransition(const Symbol ("fade"), fade);
-  FaviconDrawable.registerTransition(const Symbol ("fadeIn"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+  FaviconDrawable.registerTransition(const Symbol ("fadeIn"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
      if (item.isFirstFrame) drawable.opacity = 0.0; 
      return fade (drawable, deltaT, [parameters.length > 0 ? parameters[0] : 1000, 1.0], item);
   });
-  FaviconDrawable.registerTransition(const Symbol ("fadeOut"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+  FaviconDrawable.registerTransition(const Symbol ("fadeOut"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
      return fade (drawable, deltaT, [parameters.length > 0 ? parameters[0] : 1000, 0.0], item);
   });
 }

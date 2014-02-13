@@ -1,7 +1,7 @@
 part of FaviconDart;
 
 void _loadSlideTransitions () {
-  bool slide (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+  bool slide (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
                 //Map<String, bool>
                 int duration = parameters.length > 1 && parameters[1] is int ? parameters[1] : 1000;
                 bool isIn = parameters.length > 2 && parameters[2] is bool ? parameters[2] : true;
@@ -44,7 +44,9 @@ void _loadSlideTransitions () {
                         drawable.targetY = 0;
                         drawable.y = (isUp  == true ? drawable.parent.size : 0 - drawable.parent.size);
                       }
-                      else drawable.y = (isUp  == true ? 0 - drawable.parent.size : drawable.parent.size);
+                      else {
+                        drawable.targetY = (isUp  == true ? 0 - drawable.parent.size : drawable.parent.size);
+                      }
                   }
                   
                   // Step per millisecond
@@ -65,31 +67,31 @@ void _loadSlideTransitions () {
        FaviconDrawable.registerTransition(const Symbol("slide"), slide);
        
        // Slide ins
-       FaviconDrawable.registerTransition(const Symbol ("slideInUp"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideInUp"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "up": true }, parameters.length > 0 ? parameters[0] : 1000], item);
        });
-       FaviconDrawable.registerTransition(const Symbol ("slideInDown"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideInDown"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "down": true }, parameters.length > 0 ? parameters[0] : 1000], item);
        });
-       FaviconDrawable.registerTransition(const Symbol ("slideInLeft"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideInLeft"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "left": true }, parameters.length > 0 ? parameters[0] : 1000], item);
        });
-       FaviconDrawable.registerTransition(const Symbol ("slideInRight"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideInRight"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "right": true }, parameters.length > 0 ? parameters[0] : 1000], item);
        });
        
        // Slide outs
 
-       FaviconDrawable.registerTransition(const Symbol ("slideOutUp"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideOutUp"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "up": true }, parameters.length > 0 ? parameters[0] : 1000, false], item);
        });
-       FaviconDrawable.registerTransition(const Symbol ("slideOutDown"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideOutDown"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "down": true }, parameters.length > 0 ? parameters[0] : 1000, false], item);
        });
-       FaviconDrawable.registerTransition(const Symbol ("slideOutLeft"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideOutLeft"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "left": true }, parameters.length > 0 ? parameters[0] : 1000, false], item);
        });
-       FaviconDrawable.registerTransition(const Symbol ("slideOutRight"), (FaviconDrawable drawable, double deltaT, List parameters, FavicoTween item) {
+       FaviconDrawable.registerTransition(const Symbol ("slideOutRight"), (FaviconDrawable drawable, double deltaT, List parameters, FaviconTween item) {
          return slide (drawable, deltaT, [{ "right": true }, parameters.length > 0 ? parameters[0] : 1000, false], item);
        });
        
