@@ -26,7 +26,9 @@ local.properties
 
 # PDT-specific
 .buildpath
-
+*.js
+*.map
+*.deps
 
 #################
 ## Visual Studio
