@@ -3,12 +3,12 @@ part of FaviconDart;
 /***
  * The ImagePreloader takes a list of sources and preloads them.
  */
-class FaviconImagePreloader {
+class ImagePreloader {
   bool isLoaded = false;
   List<String> _imageSources = new List<String>();
   List<ImageElement> images = new List<ImageElement>();
   
-  FaviconImagePreloader ();
+  ImagePreloader ();
   
   /***
    * Adds an image source to be loaded

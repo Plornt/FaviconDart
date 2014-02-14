@@ -4,26 +4,23 @@ import 'dart:html';
 import 'dart:async';
 import 'dart:math';
 
-part 'drawables/drawable.dart';
-part 'drawables/background_color.dart';
-part 'drawables/badge.dart';
+part 'favicon_elements/favicon_element.dart';
+part 'favicon_elements/background_color.dart';
+part 'favicon_elements/badge.dart';
 
 part 'sources/animation.dart';
 part 'sources/source.dart';
 part 'sources/favicon.dart';
 
 part 'transitions/frame.dart';
-part 'transitions/tween.dart';
-part 'transitions/slide.dart';
-part 'transitions/fade.dart';
-part 'transitions/wait.dart';
+part 'transitions/item.dart';
 
 part 'utilities/browser_detect.dart';
 part 'utilities/image_preloader.dart';
 part 'utilities/rgba.dart';
 
 class Favicon {
-  List<FaviconDrawable> elements = new List<FaviconDrawable>();
+  List<FaviconElement> elements = new List<FaviconElement>();
   Element destinationElement;
   int size;
   
@@ -63,9 +60,7 @@ class Favicon {
     _canvas.width = this.size;
     _canvas.height = this.size;
     _context = _canvas.getContext("2d");    
-    
-    // Initialize our main drawable class to load any default animations.
-    FaviconDrawable._init();    
+
     
     // Start timing and begin the draw loop
     _stopwatch.start();
@@ -85,7 +80,7 @@ class Favicon {
     // Loop through the drawables, update them and then draw them to the temp canvas
     int eleLength = elements.length;
     for (int x = 0; x < eleLength; x++) { 
-      FaviconDrawable currentDrawable = elements[x];
+      FaviconElement currentDrawable = elements[x];
       currentDrawable._onUpdate(timeElapsed);
       if (!currentDrawable._remove) {
         currentDrawable.onDraw(_context);
@@ -123,7 +118,7 @@ class Favicon {
   /***
    * Adds the drawable to the favicons render queue.
    */
-  void addElement (FaviconDrawable drawable) {
+  void addElement (FaviconElement drawable) {
     drawable._parent = this;
     drawable.onPushedToFavicon();
     this.elements.add(drawable);

@@ -3,9 +3,9 @@ part of FaviconDart;
 /***
  * Draw a pre-existing [CanvasImageSource] to the canvas. 
  */
-class FaviconSource extends FaviconDrawable {
+class Source extends FaviconElement {
   CanvasImageSource source;
-  FaviconSource (this.source);
+  Source (this.source);
   void onDraw(CanvasRenderingContext2D ctx) {
     ctx.drawImageScaled(source, x, y, parent.size, parent.size);
   }

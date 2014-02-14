@@ -13,9 +13,9 @@ void main () {
   //ImageElement img = new ImageElement();
    
   Favicon icon = new Favicon(destinationElement: img, size: 16);
-  FaviconBadge badge = new FaviconBadge ();
+  Badge badge = new Badge ();
   
-  icon.addElement(new FaviconIconSource());
+  icon.addElement(new IconSource());
   
   
   /* VIDEO TEST */
@@ -61,20 +61,23 @@ void main () {
     int badgeNum = 1;
     b.onClick.listen((ev) { 
       badgeNum++;
-      badge..stop()
-             ..fadeIn(600)
-             ..slideInUp(600)
-             ..badge(badgeNum)
-               ..wait(1000) 
-               ..play()
-                 ..fadeOut(600)
-                 ..slideOutDown(600)
-                 ..play();
+      print("Pressed");
+      updateBadge(badge, badgeNum);
     });
     document.body.append(b);
     //document.body.append(img);
-  });
-  
-  
-  
+  });   
 }
+
+void updateBadge (Badge badge, int n) { 
+  print("Start transition");
+  badge..opacity = 1.0
+       ..transition({ "x": 0.0 }, duration: 500).listen((t) { 
+           if (t.type == TransitionEventType.BEGIN) {
+             badge.x = badge.parent.size.toDouble();
+              badge.badge(n);
+           }
+        });
+}
+
+
