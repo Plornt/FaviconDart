@@ -4,9 +4,9 @@ import 'dart:html';
 import 'dart:async';
 import 'dart:math';
 
-part 'drawables/drawable.dart';
-part 'drawables/background_color.dart';
-part 'drawables/badge.dart';
+part 'favicon_elements/favicon_element.dart';
+part 'favicon_elements/background_color.dart';
+part 'favicon_elements/badge.dart';
 
 part 'sources/animation.dart';
 part 'sources/source.dart';
@@ -14,9 +14,6 @@ part 'sources/favicon.dart';
 
 part 'transitions/frame.dart';
 part 'transitions/item.dart';
-part 'transitions/slide.dart';
-part 'transitions/fade.dart';
-part 'transitions/wait.dart';
 
 part 'utilities/browser_detect.dart';
 part 'utilities/image_preloader.dart';
@@ -63,9 +60,7 @@ class Favicon {
     _canvas.width = this.size;
     _canvas.height = this.size;
     _context = _canvas.getContext("2d");    
-    
-    // Initialize our main drawable class to load any default animations.
-    FaviconElement._init();    
+
     
     // Start timing and begin the draw loop
     _stopwatch.start();

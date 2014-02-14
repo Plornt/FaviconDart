@@ -21,10 +21,12 @@ class Badge extends FaviconElement {
   int currBadge = 0;
   int padding = 0;
   int showAbove = 0;
+  num fontSize;
   
   Badge ({ this.backgroundColor,
                   this.fontColor, 
-                  this.font: "bold 8px sans-serif", 
+                  this.fontSize: 10,
+                  this.font: "bold sans-serif", 
                   this.type: "rounded", 
                   this.position: Position.BOTTOM_RIGHT, 
                   this.padding: 0,
@@ -47,9 +49,7 @@ class Badge extends FaviconElement {
   }
   
   void onAnimationQueueEnd ([ FaviconFrame currentFrame ]) {
-    if (badgeUpdateQueue.length > 0) {
-      this.resumeTransition();
-    }
+  
   }
   String convertBadgeToText (int badgeNum) {
 
@@ -67,14 +67,13 @@ class Badge extends FaviconElement {
     ctx.font = "$font";   
     double fontWidth = ctx.measureText(badgeText).width;
     // Estimated font height 
-    double fontHeight = 4.0;
+    double fontHeight = this.fontSize.toDouble() * 0.9;
     
     int paddingLR = 4;
     int paddingTB = 4;
     
     this.width = fontWidth + paddingLR;
     this.height = fontHeight + paddingTB;
-    
    
     backgroundColor.alphaMod = opacity;  
     ctx.fillStyle = backgroundColor.toString();   
@@ -129,6 +128,6 @@ class Badge extends FaviconElement {
   }
   
   void badge (int updateNumber) {
-    
+    badgeUpdateQueue.add(updateNumber);
   }
 }

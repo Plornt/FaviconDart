@@ -1,8 +1,9 @@
 part of FaviconDart;
 
-class State {
+class TransitionStateContainer {
   Map<String, dynamic> state;
-  State(this.state) {
+  Map<String, int> durations = new Map<String, int>();
+  TransitionStateContainer(this.state) {
     
   }
   
@@ -13,11 +14,19 @@ class State {
     return null;
   }
   
+  void setTransitionDuration (String key, int duration) {
+    durations[key] = duration;
+  }
+  
+  int getDuration (String key) {
+    return durations[key];
+  } 
   void set(String key, dynamic val) {
     state[key] = val;
   }
   
   void addNum (String key, num amount) {
+//    print("$key => $amount");
     if (state.containsKey(key)) {
       if (state[key] is num) {
         state[key] += amount;
@@ -28,7 +37,7 @@ class State {
     }
   }
   
-  void merge (State otherState) {
+  void merge (TransitionStateContainer otherState) {
     otherState.state.forEach((String key, dynamic val) { 
       if (val is num) this.addNum(key, val);
       else 
@@ -40,33 +49,42 @@ class State {
     this.state.addAll(state);
   }
     
-  State clone () {
-    return new State(this.state);
+  TransitionStateContainer clone () {
+    Map<String, dynamic> clonedCopy = new Map<String, dynamic>();
+    clonedCopy.addAll(this.state);
+    return new TransitionStateContainer(clonedCopy);
   }
 }
 
-class TransitionEvent {
+class TransitionEventType {
   final int type;
-  const TransitionEvent (this.type);
+  const TransitionEventType (this.type);
   
-  static const TransitionEvent STEP = const TransitionEvent(2);
-  static const TransitionEvent STOP = const TransitionEvent(1);
-  static const TransitionEvent BEGIN = const TransitionEvent(0);
+  static const TransitionEventType STEP = const TransitionEventType(2);
+  static const TransitionEventType STOP = const TransitionEventType(1);
+  static const TransitionEventType BEGIN = const TransitionEventType(0);
+}
+
+class TransitionEvent {
+  final TransitionEventType type;
+  final TransitionItem item;
+  TransitionEvent(TransitionEventType this.type, this.item);
 }
 
 abstract class FaviconElement {
  bool _remove = false;
  List<TransitionItem> _transitionQueue = new List<TransitionItem>();
- TransitionItem _currentQueue = new TransitionItem(new State({}));
+ TransitionItem _currentQueue = new TransitionItem(new TransitionStateContainer({}));
  bool _isTransitioning = true;  
  
- State state = new State({
+ TransitionStateContainer state = new TransitionStateContainer({
                                          "x": 0.0,
                                          "y": 0.0,
                                          "opacity": 0.0,
                                          "scale": 0.0,
                                          "container_width": 0.0,
-                                         "container_height": 0.0
+                                         "container_height": 0.0,
+                                         "wait": 0.0 
                                        });
  
  Favicon _parent; 
@@ -95,13 +113,20 @@ abstract class FaviconElement {
  /***
   * 
   */
-  TransitionItem transition (Map<String, dynamic> transitionItems, [ bool addToQueue = false ]) {
+  TransitionItem transition (Map<String, dynamic> transitionItems, { int duration: 1000, bool addToQueue: false }) {
     if (addToQueue) {
       _currentQueue.toState.override(transitionItems);
+      transitionItems.forEach((String item, nu) {
+         _currentQueue.toState.setTransitionDuration(item, duration);
+      });
       return _currentQueue;
     }
     else {
-      TransitionItem insertedTransition = new TransitionItem(new State(transitionItems));
+      TransitionItem insertedTransition = new TransitionItem(new TransitionStateContainer(transitionItems));
+      transitionItems.forEach((String item, nu) {
+         insertedTransition.toState.setTransitionDuration(item, duration);
+      });
+      _transitionQueue.add(insertedTransition);            
       return insertedTransition;
     }    
   }
@@ -133,7 +158,7 @@ abstract class FaviconElement {
   * Clears the current transition queue
   */
  void clearCurrent () {
-   _currentQueue = new TransitionItem(new State({}));
+   _currentQueue = new TransitionItem(new TransitionStateContainer({}));
  }
  
  /***
@@ -145,11 +170,10 @@ abstract class FaviconElement {
    this.clearCurrent();
    if (endTransitions) {
      _transitionQueue.forEach((TransitionItem t) { 
-       t.c.complete(this);
+       t._sendEvent(new TransitionEvent(TransitionEventType.STOP, t));
      });
    }
    _transitionQueue = new List<TransitionItem>();
-   onStop();
  }
  
  
@@ -181,8 +205,60 @@ abstract class FaviconElement {
   * Called by the parent Favicon before the frame draws to the screen.
   */
  void _onUpdate (double timeSinceLastFrame) {
-   if (_isTransitioning) { 
-     // TODO: Process transition
+   if (_isTransitioning) {
+     int tLength = _transitionQueue.length;
+     if (tLength >= 1) {
+       TransitionItem curr = _transitionQueue[0];
+       if (curr.isFirstFrame) { 
+         curr._sendEvent(new TransitionEvent(TransitionEventType.BEGIN, curr));
+         this.onBeforeTransitionStart(curr);
+         curr.frameNumber++;
+         // Essentially yeild for any updates from the event streams
+         // TODO: FIX THIS TO WORK BETTER
+         return;
+       }
+       else if (curr.frameNumber == 1) {
+
+         curr.fromState = this.state.clone();
+       }
+       Map<String, dynamic> toState = curr.toState.state;
+       Map<String, dynamic> fromState = curr.fromState.state;
+       int tsL = toState.length;
+       Iterable<String> elementKeys = toState.keys;
+       if (tsL > 0) {
+         for (int x = 0; x < tsL; x++) {
+           String tk = elementKeys.elementAt(x); //transition element key
+           dynamic val = toState[tk];
+           dynamic fromS = fromState[tk];
+           bool isComplete = false;
+           /* TWEEN NUMBERS */
+           if (val is num && fromState.containsKey(tk) && fromS is num) {
+             num step = ((val - fromS) / curr.toState.getDuration(tk)) * timeSinceLastFrame;
+             
+             if ((val > fromS && ((this.state.state[tk] + step) >= val)) || (val < fromS && (this.state.state[tk] + step) <= val)) {
+               step = toState[tk];
+               isComplete = true;
+             }
+             this.state.addNum(tk, step);
+           }
+           
+           if (isComplete) {
+             tsL--;
+             x--;
+             toState.remove(tk);
+           }
+         }
+         
+         curr._sendEvent(new TransitionEvent(TransitionEventType.STEP, curr));
+         curr.frameNumber++;
+       }
+       else {
+         _transitionQueue.removeAt(0);
+         curr._sendEvent(new TransitionEvent(TransitionEventType.STOP, curr));
+         this.onTransitionEnd(curr);
+         
+       }       
+     }
    }
        
    this.onUpdate(timeSinceLastFrame);
