@@ -218,7 +218,6 @@ abstract class FaviconElement {
          return;
        }
        else if (curr.frameNumber == 1) {
-
          curr.fromState = this.state.clone();
        }
        Map<String, dynamic> toState = curr.toState.state;
@@ -236,10 +235,11 @@ abstract class FaviconElement {
              num step = ((val - fromS) / curr.toState.getDuration(tk)) * timeSinceLastFrame;
              
              if ((val > fromS && ((this.state.state[tk] + step) >= val)) || (val < fromS && (this.state.state[tk] + step) <= val)) {
-               step = toState[tk];
                isComplete = true;
+               this.state.set(tk, toState[tk]);
+               print(this.state.state[tk]);
              }
-             this.state.addNum(tk, step);
+             else this.state.addNum(tk, step);
            }
            
            if (isComplete) {
