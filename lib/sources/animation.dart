@@ -68,12 +68,15 @@ class FaviconAnimationSource extends FaviconPausable {
   
   void onDraw (CanvasRenderingContext2D ctx) {
     if (isLoaded) {
+      ctx.save();
+      ctx.scale(this.scale, this.scale);
       if (isSpriteSheet) {
         ctx.drawImageScaledFromSource(_preloader.images[0], frameSizeX * frame, 0, frameSizeX, _preloader.images[0].height, 0, 0, parent.size, parent.size);
       }
       else {
         ctx.drawImageScaled(_preloader.images[frame], x, y, parent.size, parent.size);
       }
+      ctx.restore();
     }
   }
 }

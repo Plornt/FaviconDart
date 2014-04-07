@@ -12,8 +12,8 @@ part 'sources/animation.dart';
 part 'sources/source.dart';
 part 'sources/favicon.dart';
 
-part 'transitions/frame.dart';
-part 'transitions/item.dart';
+part 'transitions/state_container.dart';
+part 'transitions/transition_events.dart';
 
 part 'utilities/browser_detect.dart';
 part 'utilities/image_preloader.dart';

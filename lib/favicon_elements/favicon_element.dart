@@ -1,87 +1,16 @@
 part of FaviconDart;
 
-class TransitionStateContainer {
-  Map<String, dynamic> state;
-  Map<String, int> durations = new Map<String, int>();
-  TransitionStateContainer(this.state) {
-    
-  }
-  
-  dynamic get (String key) {
-    if (state.containsKey(key)) {
-      return state[key];
-    }
-    return null;
-  }
-  
-  void setTransitionDuration (String key, int duration) {
-    durations[key] = duration;
-  }
-  
-  int getDuration (String key) {
-    return durations[key];
-  } 
-  void set(String key, dynamic val) {
-    state[key] = val;
-  }
-  
-  void addNum (String key, num amount) {
-//    print("$key => $amount");
-    if (state.containsKey(key)) {
-      if (state[key] is num) {
-        state[key] += amount;
-      }
-    }
-    else {
-      state[key] = amount;
-    }
-  }
-  
-  void merge (TransitionStateContainer otherState) {
-    otherState.state.forEach((String key, dynamic val) { 
-      if (val is num) this.addNum(key, val);
-      else 
-        state[key] = val;
-    });
-  }
-  
-  void override (Map <String, dynamic> state) {
-    this.state.addAll(state);
-  }
-    
-  TransitionStateContainer clone () {
-    Map<String, dynamic> clonedCopy = new Map<String, dynamic>();
-    clonedCopy.addAll(this.state);
-    return new TransitionStateContainer(clonedCopy);
-  }
-}
-
-class TransitionEventType {
-  final int type;
-  const TransitionEventType (this.type);
-  
-  static const TransitionEventType STEP = const TransitionEventType(2);
-  static const TransitionEventType STOP = const TransitionEventType(1);
-  static const TransitionEventType BEGIN = const TransitionEventType(0);
-}
-
-class TransitionEvent {
-  final TransitionEventType type;
-  final TransitionItem item;
-  TransitionEvent(TransitionEventType this.type, this.item);
-}
-
 abstract class FaviconElement {
  bool _remove = false;
- List<TransitionItem> _transitionQueue = new List<TransitionItem>();
- TransitionItem _currentQueue = new TransitionItem(new TransitionStateContainer({}));
+ List<TweenItem> _transitionQueue = new List<TweenItem>();
+ TweenItem _currentQueue = new TweenItem(new TweenStateContainer({}));
  bool _isTransitioning = true;  
  
- TransitionStateContainer state = new TransitionStateContainer({
+ TweenStateContainer state = new TweenStateContainer({
                                          "x": 0.0,
                                          "y": 0.0,
                                          "opacity": 0.0,
-                                         "scale": 0.0,
+                                         "scale": 1.0,
                                          "container_width": 0.0,
                                          "container_height": 0.0,
                                          "wait": 0.0 
@@ -113,7 +42,7 @@ abstract class FaviconElement {
  /***
   * 
   */
-  TransitionItem transition (Map<String, dynamic> transitionItems, { int duration: 1000, bool addToQueue: false }) {
+  TweenItem transition (Map<String, dynamic> transitionItems, { int duration: 1000, bool addToQueue: false }) {
     if (addToQueue) {
       _currentQueue.toState.override(transitionItems);
       transitionItems.forEach((String item, nu) {
@@ -122,7 +51,7 @@ abstract class FaviconElement {
       return _currentQueue;
     }
     else {
-      TransitionItem insertedTransition = new TransitionItem(new TransitionStateContainer(transitionItems));
+      TweenItem insertedTransition = new TweenItem(new TweenStateContainer(transitionItems));
       transitionItems.forEach((String item, nu) {
          insertedTransition.toState.setTransitionDuration(item, duration);
       });
@@ -134,7 +63,7 @@ abstract class FaviconElement {
  /***
   * Takes the current transition queue and plays it.
   */
- TransitionItem play () {
+ TweenItem play () {
    _transitionQueue.add(_currentQueue);
    this.clearCurrent();
    return _currentQueue;   
@@ -143,7 +72,7 @@ abstract class FaviconElement {
  /***
   * Inserts the current transition queue to the top of the stack and plays it. 
   */
- TransitionItem insertPlay () {
+ TweenItem insertPlay () {
    if (_transitionQueue.length >= 1) {
     _transitionQueue.insert(0, _currentQueue);
    }
@@ -158,7 +87,7 @@ abstract class FaviconElement {
   * Clears the current transition queue
   */
  void clearCurrent () {
-   _currentQueue = new TransitionItem(new TransitionStateContainer({}));
+   _currentQueue = new TweenItem(new TweenStateContainer({}));
  }
  
  /***
@@ -169,11 +98,11 @@ abstract class FaviconElement {
  void stop ([bool endTransitions = false]) {
    this.clearCurrent();
    if (endTransitions) {
-     _transitionQueue.forEach((TransitionItem t) { 
-       t._sendEvent(new TransitionEvent(TransitionEventType.STOP, t));
+     _transitionQueue.forEach((TweenItem t) { 
+       t._sendEvent(new TweenEvent(TweenEventType.STOP, t));
      });
    }
-   _transitionQueue = new List<TransitionItem>();
+   _transitionQueue = new List<TweenItem>();
  }
  
  
@@ -208,12 +137,13 @@ abstract class FaviconElement {
    if (_isTransitioning) {
      int tLength = _transitionQueue.length;
      if (tLength >= 1) {
-       TransitionItem curr = _transitionQueue[0];
+       TweenItem curr = _transitionQueue[0];
        if (curr.isFirstFrame) { 
-         curr._sendEvent(new TransitionEvent(TransitionEventType.BEGIN, curr));
+         curr._sendEvent(new TweenEvent(TweenEventType.BEGIN, curr));
          this.onBeforeTransitionStart(curr);
          curr.frameNumber++;
          // Essentially yeild for any updates from the event streams
+         // Need to do this before v1 as this loses 33ms :/
          // TODO: FIX THIS TO WORK BETTER
          return;
        }
@@ -249,12 +179,12 @@ abstract class FaviconElement {
            }
          }
          
-         curr._sendEvent(new TransitionEvent(TransitionEventType.STEP, curr));
+         curr._sendEvent(new TweenEvent(TweenEventType.STEP, curr));
          curr.frameNumber++;
        }
        else {
          _transitionQueue.removeAt(0);
-         curr._sendEvent(new TransitionEvent(TransitionEventType.STOP, curr));
+         curr._sendEvent(new TweenEvent(TweenEventType.STOP, curr));
          this.onTransitionEnd(curr);
          
        }       
@@ -295,7 +225,7 @@ abstract class FaviconElement {
  /***
   * Called when the animation queue has finished
   */
- void onTransitionEnd ([ TransitionItem currentFrame ]) {
+ void onTransitionEnd ([ TweenItem currentFrame ]) {
    
  }
  
@@ -318,7 +248,7 @@ abstract class FaviconElement {
  /***
   * Called before an animation begins processing
   */
- void onBeforeTransitionStart ([ TransitionItem currentFrame ]) {
+ void onBeforeTransitionStart ([ TweenItem currentFrame ]) {
    
  }
  
@@ -335,6 +265,94 @@ abstract class FaviconElement {
   */
  void onDraw (CanvasRenderingContext2D ctx) {
    
+ }
+ 
+ /***
+  * Fades in an element
+  * [startInstantly] starts the transition straight after this is called
+  * [queue] adds the transition to the queue ready to be [play()]'d
+  * [initialOpacity] sets the opacity the animation should start at.
+  */
+ TweenItem fadeIn ({ int duration: 500, bool startInstantly: false, bool queue: false, double initialOpacity: 0.0 }) {
+   if (startInstantly) this.stop();
+   return this.transition({ "opacity": 1.0 }, duration: duration, addToQueue: queue)..listen((t) { 
+     if (t.type == TweenEventType.BEGIN) {
+       if (initialOpacity != null) this.opacity = initialOpacity;
+     }
+   });
+ }
+ 
+ /***
+  * Fades out an element
+  * [startInstantly] starts the transition straight after this is called
+  * [queue] adds the transition to the queue ready to be [play()]'d
+  */
+ TweenItem fadeOut ({ int duration: 500, bool startInstantly: false, bool queue: false}) {
+   if (startInstantly) this.stop();
+   return this.transition({ "opacity": 0.0 }, duration: duration, addToQueue: queue);
+ }
+ 
+ TweenItem slideIn (String direction, { int duration: 500, bool startInstantly: false, bool queue: false, Map startState: const { "x": 0.0, "y": 0.0 } }) {
+   Map end;
+   switch (direction.toLowerCase()) {
+     case "up":
+       end = { "y": 0.0 };
+       break;
+     case "down":
+       end = { "y": 0.0 };
+       break;
+     case "left":
+       end = { "x": 0.0 };
+       break;
+     case "right":
+       end = { "x": 0.0 };
+       break;
+     default:
+       throw new ArgumentError("Unknown direction $direction - valid options: up, down, left, right.");
+       break;
+   } 
+   if (startInstantly) this.stop();
+   return this.transition(end, duration: duration, addToQueue: queue)..listen((t) { 
+     if (t.type == TweenEventType.BEGIN) {
+       this.state.override(startState);
+     }
+   });
+ }
+ 
+ TweenItem slideOut (String direction, { int duration: 500, bool startInstantly: false, bool queue: false, Map startState: const { "x": 0.0, "y": 0.0 } }) {
+   Map end;
+   switch (direction.toLowerCase()) {
+     case "up":
+       end = { "y": this.parent.size.toDouble() };
+       break;
+     case "down":
+       end = { "y": -this.parent.size.toDouble() };
+       break;
+     case "left":
+       end = { "x": this.parent.size.toDouble() };
+       break;
+     case "right":
+       end = { "x": -this.parent.size.toDouble() };
+       break;
+     default:
+       throw new ArgumentError("Unknown direction $direction - valid options: up, down, left, right.");
+       break;
+   } 
+   if (startInstantly) this.stop();
+   return this.transition(end, duration: duration, addToQueue: queue)..listen((t) { 
+     if (t.type == TweenEventType.BEGIN) {
+       this.state.override(startState);
+     }
+   });
+ }
+ 
+ TweenItem wait ({ int duration: 500, bool startInstantly: false, bool queue: false }) {
+   if (startInstantly) this.stop();
+   return this.transition({ "wait": 0 }, duration: duration, addToQueue: queue)..listen((t) { 
+     if (t.type == TweenEventType.BEGIN) {
+       this.state.override({"wait": 1});
+     }
+   });
  }
  
 }

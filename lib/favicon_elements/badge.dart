@@ -18,7 +18,6 @@ class Badge extends FaviconElement {
   String fontFamily;
   String type;
   Position position;
-  //List<int> badgeUpdateQueue = new List<int>();
   int currBadge = 0;
   int padding = 0;
   int showAbove = 0;
@@ -35,7 +34,7 @@ class Badge extends FaviconElement {
                   this.fontStyle: "bold",
                   this.type: "rounded", 
                   this.position: Position.BOTTOM_RIGHT, 
-                  this.padding: 0,
+                  this.padding: 1,
                   this.showAbove: 0
                   }) {
     if (currBadge > showAbove) this.opacity = 1.0;
@@ -45,32 +44,23 @@ class Badge extends FaviconElement {
    if (this.fontColor == null) fontColor = new RGBA (255,255,255);
   }
   
-//  void onBeforeAnimationQueueBegin ([ FaviconFrame currentFrame ]) {
-//    if (badgeUpdateQueue.length > 0) {
-//      currBadge = badgeUpdateQueue[0];
-//      badgeUpdateQueue.removeAt(0);
-//      if (currBadge > showAbove) this.opacity = 1.0;
-//      else this.opacity = 0.0;
-//    }
-//  }
   
-  void onAnimationQueueEnd ([ FaviconFrame currentFrame ]) {
-  
-  }
   String convertBadgeToText (int badgeNum) {
-
+    // Heh... You know for when you have a million notifications!
     if (badgeNum > 999999) {
-       return "${(badgeNum / 1000000).toStringAsFixed(1)}M";
+       return "${(badgeNum / 1000000).toStringAsFixed(1)}m";
     }
     if (badgeNum > 999) {
-      return "${(badgeNum / 1000).toStringAsFixed(1)}K";
+      return "${(badgeNum / 1000).toStringAsFixed(0)}k+";
     }
     return badgeNum.toString();
   }
   
   void onDraw (CanvasRenderingContext2D ctx) {
+    ctx.save();
+    ctx.scale(this.scale, this.scale);
     // TODO: Expose this padding somehow when everything looks right...
-    int paddingLR = 4;
+    int paddingLR = 2;
     int paddingTB = 4;
     
     String badgeText = convertBadgeToText(currBadge);
@@ -78,17 +68,12 @@ class Badge extends FaviconElement {
     ctx.textBaseline="middle"; 
     double fontWidth = ctx.measureText(badgeText).width;
     if (this.adaptiveFontSize) {
-      // TODO: Dont use loops like this pretty evil!
-      while ((fontWidth + paddingLR) <= this.parent.size && this.fontSize < this.maxFontSize) {
-        this.fontSize += 0.01;
-        ctx.font = "$fontStyle ${fontSize}px $fontFamily";   
-        fontWidth = ctx.measureText(badgeText).width;
+      fontSize = (fontSize * ((this.parent.size - paddingLR - padding) / fontWidth)).floor();
+      if (fontSize > maxFontSize) {
+        fontSize = maxFontSize;
       }
-      while ((fontWidth + paddingLR) >= this.parent.size) {
-        this.fontSize -= 0.01;
-        ctx.font = "$fontStyle ${fontSize}px $fontFamily";   
-        fontWidth = ctx.measureText(badgeText).width;
-      }
+      ctx.font = "$fontStyle ${fontSize}px $fontFamily";   
+      fontWidth = ctx.measureText(badgeText).width;        
     }
     // Estimated font height 
     double fontHeight = ctx.measureText("M").width; // Yeah! Because that makes sense right... 
@@ -100,13 +85,13 @@ class Badge extends FaviconElement {
     ctx.fillStyle = backgroundColor.toString();   
     switch (position) {
       case Position.TOP_LEFT:
-        ctx.translate(2, 2);
+        ctx.translate( padding,  padding);
         break;
       case Position.TOP_RIGHT:
-        ctx.translate(parent.size - width - padding, 2);
+        ctx.translate(parent.size - width - padding, padding);
         break;
       case Position.BOTTOM_LEFT:
-        ctx.translate(2, parent.size - height - padding);
+        ctx.translate( padding, parent.size - height - padding);
         break;
 
       case Position.BOTTOM_RIGHT:
@@ -138,19 +123,23 @@ class Badge extends FaviconElement {
     fontColor.alphaMod = opacity;
     ctx.fillStyle = fontColor.toString();
     ctx.fillText(convertBadgeToText(currBadge), x + (paddingLR / 2), y + (height / 2));  
-    
+    ctx.restore();
   }
   
   void onUpdate (double deltaT) {
      
   }
   
-  void clearBadgeQueue() {
-   // badgeUpdateQueue = new List<int>();
-  }
   
-  void badge (int updateNumber) {
+  void badge (int updateNumber, { bool doOpacityCheck: true }) {
     currBadge = updateNumber;
-  //  badgeUpdateQueue.add(updateNumber);
+    if (doOpacityCheck) {
+      if (currBadge > showAbove) {
+        this.opacity = 1.0;
+      }
+      else {
+        this.opacity = 0.0;
+      }
+    }
   }
 }
