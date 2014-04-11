@@ -1,0 +1,6 @@
+name: FaviconExample
+description: An example web application using the Favicon class
+dependencies:
+  browser: any
+  favicon_dart: 
+      path: "../"

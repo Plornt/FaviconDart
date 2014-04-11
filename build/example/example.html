@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>favico</title>
+    <link rel="shortcut icon" type="image/png" href="images/favicon.ico" id="favicon" />
+    <link href="css/styles.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript">
+      (function(d) {
+        var config = {
+          kitId: 'hay5kyv',
+          scriptTimeout: 3000
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='//use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
+  </head>
+ 
+  <body>   
+    <noscript class="alert alert-warning">You do not have javascript enabled. As this is a javascript based library the functionality of this site will not work and nor will the examples. The sites favicon falls back to the original favicon icon.</noscript>
+    <section class="header-example text-center">
+      <h1 class="tk-omnes-pro">Favicon Dart</h1>
+      <img id="ex_one" src="images/large_favicon.png" width="320" height="320" />
+      <div class="button-row">
+      <button id="ex_one_p1" class="header-btn">+1</button>
+      <button id="ex_one_m1" class="header-btn">-1</button>
+      <button id="ex_one_p10" class="header-btn">+10</button>
+      <button id="ex_one_m10" class="header-btn">-10</button>
+      <button id="ex_one_reset" class="header-btn">Reset</button>
+      <button id="ex_one_video" class="header-btn">Video</button>
+      </div>
+      <p>
+        A <A>Dartlang</A> library for creating animations and badges for the favicon icon.</p>
+        <p>Click the buttons above to view a quick demo. More demos provided below.
+      </p>
+    </section>
+    <section class="examples container-fluid">
+      <div class="row">
+        <section class="example-row">
+          <header class="row"><h4>Badge with no animation</h4></header>
+          
+          <div class="row well-sm well">
+            <div class="example-container">
+             <div class="chrome">
+                <img id="ex_two_icon" width="16" height="16" class="chrome-icon">
+             </div>
+                     
+             <button id="ex_two_p1" class="example-btn left">+1</button>
+             <button id="ex_two_m1" class="example-btn right">-1</button>
+           </div>
+           <div class="col-sm-8">
+              <pre class="prettyprint linenums">
+Favicon f = new Favicon(); 
+Badge b = new Badge(); // Create a badge element
+f.addElement(b); // Add the badge element to the favicon
+b.badge(1); // Update the badge number in the favicon</pre>
+            </div>
+            
+          </div>
+        </section>
+          
+          
+        <section class="example-row">
+          <header class="row"><h4>Badge with fade animation</h4></header>
+          
+            <div class="row well-sm well">
+            <div class="example-container">
+             <div class="chrome">
+                <img id="ex_three_icon" width="16" height="16" class="chrome-icon">
+             </div>
+                     
+             <button id="ex_three_p1" class="example-btn left">+1</button>
+             <button id="ex_three_m1" class="example-btn right">-1</button>
+           </div>
+           <div class="col-sm-8">
+              <pre class="prettyprint linenums">
+Favicon f = new Favicon(); 
+Badge b = new Badge(); // Create a badge element
+f.addElement(b); // Add the badge element to the favicon
+b.fadeInBadge(1); // Fades in the badge number</pre>
+            </div>
+            
+          </div>
+          
+          
+        </section>
+        
+         <section class="example-row">
+          <header class="row"><h4>Badge which immediately updates rather than queues animations</h4></header>
+          
+            <div class="row well-sm well">
+            <div class="example-container">
+             <div class="chrome">
+                <img id="ex_four_icon" width="16" height="16" class="chrome-icon">
+             </div>
+                     
+             <button id="ex_four_p1" class="example-btn left">+1</button>
+             <button id="ex_four_m1" class="example-btn right">-1</button>
+           </div>
+           <div class="col-sm-8">
+              <pre class="prettyprint linenums">
+Favicon f = new Favicon(); 
+Badge b = new Badge(); // Create a badge element
+f.addElement(b); // Add the badge element to the favicon
+b.slideInBadge(1, "up", startInstantly: true); // Slides in the badge number instantly</pre>
+            </div>
+            
+          </div>
+          
+          
+        </section>
+      </div>
+    </section>
+    
+    <!-- View main.dart for actual example usage -->
+    <script type="application/dart" src="main.dart"></script>
+    <!-- for this next line to work, your pubspec.yaml file must have a dependency on 'browser' -->
+    <script src="packages/browser/dart.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    
+  </body>
+</html>
