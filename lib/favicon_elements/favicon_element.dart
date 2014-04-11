@@ -39,9 +39,6 @@ abstract class FaviconElement {
    
  }
  
- /***
-  * 
-  */
   TweenItem transition (Map<String, dynamic> transitionItems, { int duration: 1000, bool addToQueue: false }) {
     if (addToQueue) {
       _currentQueue.toState.override(transitionItems);
@@ -167,11 +164,9 @@ abstract class FaviconElement {
              if ((val > fromS && ((this.state.state[tk] + step) >= val)) || (val < fromS && (this.state.state[tk] + step) <= val)) {
                isComplete = true;
                this.state.set(tk, toState[tk]);
-               print(this.state.state[tk]);
              }
              else this.state.addNum(tk, step);
            }
-           
            if (isComplete) {
              tsL--;
              x--;
@@ -292,20 +287,31 @@ abstract class FaviconElement {
    return this.transition({ "opacity": 0.0 }, duration: duration, addToQueue: queue);
  }
  
- TweenItem slideIn (String direction, { int duration: 500, bool startInstantly: false, bool queue: false, Map startState: const { "x": 0.0, "y": 0.0 } }) {
+ TweenItem slideIn (String direction, { int duration: 500, bool startInstantly: false, bool queue: false, Map startState: null }) {
+   bool adjustStartState = false;
+   if (startState == null) {
+    adjustStartState = true;
+    startState = {};
+  }
    Map end;
    switch (direction.toLowerCase()) {
      case "up":
        end = { "y": 0.0 };
+       if (adjustStartState) startState = { "y": this.parent.size.toDouble() };
        break;
      case "down":
        end = { "y": 0.0 };
+       if (adjustStartState) startState = { "y": -this.parent.size.toDouble() };
        break;
      case "left":
        end = { "x": 0.0 };
+
+       if (adjustStartState) startState = { "x": this.parent.size.toDouble() };
        break;
      case "right":
        end = { "x": 0.0 };
+
+       if (adjustStartState) startState = { "x": -this.parent.size.toDouble() };
        break;
      default:
        throw new ArgumentError("Unknown direction $direction - valid options: up, down, left, right.");
@@ -355,6 +361,14 @@ abstract class FaviconElement {
    });
  }
  
+ TweenItem resize (double scale, { double startingScale, int duration: 500, bool startInstantly: false, bool queue: false }) {
+    if (startInstantly) this.stop();
+    return this.transition({ "scale": scale }, duration: duration, addToQueue: queue)..listen((t) { 
+      if (t.type == TweenEventType.BEGIN && startingScale != null) {
+        this.state.override({"scale": startingScale});
+      }
+    });
+  }
 }
 
 abstract class FaviconPausable extends FaviconElement {

@@ -70,7 +70,7 @@ class Favicon {
   void _loopDraw () {
     new Timer(new Duration(milliseconds: 33), _loopDraw);
     // Clear the canvas:
-    _canvas.width = _canvas.width;
+    _context.clearRect(0, 0, _canvas.width, _canvas.height);
     
     // Work out how much time has elapsed since previous frames
     double t = _stopwatch.elapsedMicroseconds / 1000;
@@ -91,7 +91,6 @@ class Favicon {
         eleLength--;
       }
     }
-    
     // Send the canvas image buffer data 
     _updateImage (_canvas.toDataUrl()); 
   }
@@ -122,6 +121,13 @@ class Favicon {
     drawable._parent = this;
     drawable.onPushedToFavicon();
     this.elements.add(drawable);
+  }
+  
+  void bringToFront (FaviconElement drawable) {
+    if (elements.contains(drawable)) {
+      elements.remove(drawable);
+      elements.add(drawable);
+    }
   }
 }
 

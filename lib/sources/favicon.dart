@@ -23,7 +23,7 @@ class IconSource extends FaviconElement {
       }
       else {
         print("Could not find favicon tag to load the image from. Attempting to load default favicon from server");
-        _image.src = "/favicon.ico";
+        _image.src = "favicon.ico";
         
       }
     }  
